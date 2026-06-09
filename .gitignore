@@ -1,0 +1,13 @@
+# build artifacts (regenerable)
+DX_studies_2025/build/
+Build/
+DerivedData/
+# runtime outputs (keep the folder, ignore generated files)
+DX_studies_2025/output/*
+!DX_studies_2025/output/.gitkeep
+# macOS / editor
+.DS_Store
+*.xcuserstate
+xcuserdata/
+Thumbs.db
+*.exe

@@ -1,0 +1,9 @@
+%YAML:1.0
+---
+ch0_min: 34
+ch0_max: 70
+ch1_min: 30
+ch1_max: 255
+ch2_min: 146
+ch2_max: 255
+N: 1

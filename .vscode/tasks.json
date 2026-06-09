@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "prepare build dir",
+      "type": "shell",
+      "command": "New-Item",
+      "args": ["-ItemType", "Directory", "-Force", "-Path", "DX_studies_2025/build"],
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "problemMatcher": []
+    },
+    {
+      "label": "build OpenGL project",
+      "type": "shell",
+      "command": "C:/msys64/mingw64/bin/g++.exe",
+      "args": [
+        "-std=c++17",
+        "-IC:/msys64/mingw64/include",
+        "-IC:/msys64/mingw64/include/opencv4",
+        "-I./common_functions",
+        "-I.",
+        "DX_studies_2025/DX_studies_2025/*.cpp",
+        "common_functions/*.cpp",
+        "-LC:/msys64/mingw64/lib",
+        "-lopencv_core", "-lopencv_imgproc", "-lopencv_highgui", "-lopencv_videoio",
+        "-lopencv_imgcodecs", "-lopencv_calib3d", "-lopencv_features2d",
+        "-lglew32", "-lfreeglut", "-lopengl32", "-lglu32",
+        "-mconsole",
+        "-o", "DX_studies_2025/build/OpenGLApp.exe"
+      ],
+      "options": {
+        "shell": { "executable": "powershell.exe" },
+        "env": { "PATH": "C:/msys64/mingw64/bin;${env:PATH}" }
+      },
+      "dependsOn": "prepare build dir",
+      "dependsOrder": "sequence",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "run OpenGL project",
+      "type": "shell",
+      "dependsOn": "build OpenGL project",
+      "command": "${workspaceFolder}/DX_studies_2025/build/OpenGLApp.exe",
+      "options": {
+        "cwd": "${workspaceFolder}/DX_studies_2025",
+        "shell": { "executable": "powershell.exe" },
+        "env": { "PATH": "C:/msys64/mingw64/bin;${env:PATH}" }
+      },
+      "group": { "kind": "build", "isDefault": true }
+    }
+  ]
+}
