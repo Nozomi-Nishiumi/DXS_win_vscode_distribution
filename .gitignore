@@ -11,3 +11,5 @@ DX_studies_2025/output/*
 xcuserdata/
 Thumbs.db
 *.exe
+# color-threshold state, auto-generated per run/environment (mode 5 で各自調整)
+cam0_*.yml
