@@ -394,13 +394,13 @@ void cap(){
 void tgt_tracking(){
 //    camera.tgt.loadparameters("tgt");
 
-    string yml="./output/cam_intrinsic_prameters_new.yml";
+    // string yml="./output/cam_intrinsic_prameters_new.yml";
 
 
-    cv::FileStorage fs(yml, cv::FileStorage::READ);
-    fs["cameraMatrix"] >> camera.cam_mat;
-    fs["distCoeffs"] >> camera.dist_coefs;
-    fs.release();
+    // cv::FileStorage fs(yml, cv::FileStorage::READ);
+    // fs["cameraMatrix"] >> camera.cam_mat;
+    // fs["distCoeffs"] >> camera.dist_coefs;
+    // fs.release();
     while(1){
         if(camera.im_ori.empty()||(camera.rvec.rows+camera.rvec.cols)!=4){continue;}
         Mat src=camera.im_ori.clone();
@@ -412,7 +412,9 @@ void tgt_tracking(){
     }
 
     while(1){
-        if(camera.im_ori.empty()){continue;}
+        // 姿勢(rvec/tvec)が未確定（マーカー未検出）の間は描画用変換をスキップ。
+        // 空行列を行列演算に渡すと cv::Exception(empty matrix) で落ちるため。
+        if(camera.im_ori.empty()||camera.rvec.empty()||camera.tvec.empty()){continue;}
         Mat src=camera.im_ori.clone();
 
         Mat hsv;
@@ -425,6 +427,10 @@ void tgt_tracking(){
                    1);
 
         vector<Point2f> tgts=get_N_targetpoints(proc, 1);
+
+        // ターゲット色が未検出だと tgts が空になる。空の点列を undistortPoints に渡すと
+        // 内部の行列転置で cv::Exception(empty matrix) になって落ちるので、その場合はスキップ。
+        if(tgts.empty()){ continue; }
 
 
         // 歪み補正後のピクセル→正規化座標
@@ -470,7 +476,7 @@ void calib(){
     };
 
 
-    string yml="./output/cam_intrinsic_prameters_new.yml";
+    string yml="./output/cam_intrinsic_prameters_test.yml";
 
 
     cv::FileStorage fs(yml, cv::FileStorage::READ);
@@ -646,6 +652,7 @@ int main7(int argc, char *argv[])
     glLightfv(GL_LIGHT0, GL_AMBIENT,  light_amb);
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_dif);
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_spec);
+
     app_gl.run();
 
 

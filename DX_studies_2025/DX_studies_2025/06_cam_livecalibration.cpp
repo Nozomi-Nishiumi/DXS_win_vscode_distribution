@@ -50,7 +50,7 @@ std::string getCameraIdentifier(const std::string &device) {
 int main6(int argc, char** argv) {
     const char* keys =
         "{help h usage ? |      | print this message }"
-        "{device       | 1    | Camera device ID or URL }"
+        "{device       | 0    | Camera device ID or URL }"
         "{width        | 1920 | Capture width }"
         "{height       | 1080  | Capture height }"
         "{grid_size    | 10,7 | Chessboard grid size (cols,rows) of inner corners }"
