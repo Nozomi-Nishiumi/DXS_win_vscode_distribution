@@ -215,10 +215,20 @@ void draw_simplecg(){
 }
 
 void FBO_contents(){
-    if(camera.im_ori.empty()||cameraData.size()==0){
-        viewsetting();
+    // myDisplay_7 と同じ視点選択ロジックに統一（'v' = MyGLApp::viewmode2）。
+    // viewsetting2 は姿勢(rvec/tvec)・cameraData・映像が必要で、未確定のまま呼ぶと空行列で落ちる。
+    if(app_gl.viewmode2){
+        if(!camera.im_ori.empty() && cameraData.size()>=2
+           && !camera.rvec.empty() && !camera.tvec.empty()){
+            viewsetting2();                   // 姿勢が揃っている → 視点2
+        }else{
+            // 姿勢等が未確定：ユーザー選択の視点を勝手に視点1へ戻さない（投影は維持）。
+            // バッファだけ消去してエラー/残像を回避。
+            glClearColor(0.0, 0.0, 0.0, 0.0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
     }else{
-        viewsetting2();
+        viewsetting();                        // ユーザーが視点1を選択中
     }
 
     float time_s = glutGet(GLUT_ELAPSED_TIME)/1000.0;
@@ -306,12 +316,22 @@ void myDisplay_7() {
     }
 
 
-//    if(camera.im_ori.empty()||cameraData.size()==0){
-//        viewsetting();
-//    }else{
-//        viewsetting2();
-//    }
-        viewsetting();
+    // 'v' キーで viewsetting()⇔viewsetting2() を切替（MyGLApp::viewmode2 がトグルされる）。
+    // viewsetting2 はカメラ姿勢(rvec/tvec)・cameraData・映像が必要で、未確定のまま呼ぶと
+    // 空行列演算で cv::Exception になる。
+    if(app_gl.viewmode2){
+        if(!camera.im_ori.empty() && cameraData.size()>=2
+           && !camera.rvec.empty() && !camera.tvec.empty()){
+            viewsetting2();                   // 姿勢が揃っている → 視点2
+        }else{
+            // 姿勢等が未確定：ユーザー選択の視点を勝手に視点1へ戻さない（投影は維持）。
+            // display() はクリアしないので、バッファだけ消去してエラー/残像を回避。
+            glClearColor(0.0, 0.0, 0.0, 0.0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
+    }else{
+        viewsetting();                        // ユーザーが視点1を選択中
+    }
 
 
     glDisable(GL_LIGHT0);

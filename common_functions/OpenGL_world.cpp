@@ -128,7 +128,12 @@ void MyGLApp::key_down_nml(unsigned char key, int x, int y){
             break;
         case 'b':
             cout<<"xyz: "<<casts[Camera][X]<<","<<casts[Camera][Y]<<","<<casts[Camera][Z]<<endl;
-
+            break;
+        case 'v':
+            // 視点モードのトグル（押すたびに 1⇔2 が入れ替わる）。
+            viewmode2 = !viewmode2;
+            cout<<"viewsetting mode: "<<(viewmode2 ? 2 : 1)<<endl;
+            break;
     }
 }
 

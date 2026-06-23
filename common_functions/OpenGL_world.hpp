@@ -28,6 +28,9 @@ public:
     static MyGLApp& getInstance();
     double POVfrom[3],Head[3],POVto[3];
     double vangle=60.0;
+    // 'v' キーで切り替える視点モード（false: 通常視点 / true: カメラ姿勢ベースの viewsetting2）。
+    // 描画側(各モード)がこのフラグを見て viewsetting() / viewsetting2() を選ぶ。
+    bool viewmode2 = false;
 
     void init(int argc, char** argv);
     void run();
