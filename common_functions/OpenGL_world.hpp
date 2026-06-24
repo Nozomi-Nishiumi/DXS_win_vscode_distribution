@@ -47,7 +47,7 @@ private:
     MyGLApp();
     int windowWidth = 400;
     int windowHeight = 800;
-    std::vector<double> obj={0.0,-600.0,200.0,0.0,0.0,0.0,0.0,0.0};
+    std::vector<double> obj={-1000.0,0.0,200.0,0.0,0.0,0.0,0.0,0.0};
     std::vector<std::vector<double>> casts={obj};
     std::vector<double> Camera_head={0,0,0};
     const double pi = 3.14159265358979323846264338327950288;
@@ -66,7 +66,6 @@ private:
     double Vmax=3000*0.6;
     const double turnlimit = 1.0;
     vector<vector<double>> body,head;
-//    double POVfrom[3],Head[3],POVto[3];
     int tgtcast,tgtlock=0;
     int elapsed_time = 0;
     GLuint texture[1];

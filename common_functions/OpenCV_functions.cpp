@@ -462,7 +462,7 @@ void Trackbar::setNMaxValue(int nmax) {
 }
 
 std::string Trackbar::filename() const {
-    return name + ".yml"; // 例: "cam0_ori.yml"
+    return "output/" + name + ".yml"; // 例: "output/cam0_ori.yml"（06 の出力と同じ output フォルダに統一）
 }
 
 void Trackbar::loadparameters() {
@@ -486,6 +486,7 @@ void Trackbar::loadparameters() {
 }
 
 void Trackbar::saveToFile() const {
+    std::filesystem::create_directories("output"); // 出力先フォルダが無ければ作成
     cv::FileStorage fs(filename(), cv::FileStorage::WRITE);
     fs << "ch0_min" << ch0_min << "ch0_max" << ch0_max
        << "ch1_min" << ch1_min << "ch1_max" << ch1_max
