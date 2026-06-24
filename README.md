@@ -43,18 +43,23 @@ pacman -S mingw-w64-x86_64-opencv
 デフォルトの `all` を選びたいので Enter で進めます。
 
 ## 手順5. OpenGL 関連（描画ライブラリ）
-3Dグラフィックス描画に使います。順に実行します。
+3Dグラフィックス描画に使います。以下を1つずつ順に実行します（聞かれたら Enter / `y` + Enter で進めます）。
 ```
 pacman -S mingw-w64-x86_64-glew
+```
+```
 pacman -S mingw-w64-x86_64-freeglut
+```
+```
 pacman -S mingw-w64-x86_64-qt6
 ```
-聞かれたら Enter / `y` + Enter で進めます。
 
 ## 手順6. インストール確認
 MINGW64 ターミナルで以下を実行し、どちらもバージョンが表示されれば成功です。
 ```
 g++ --version
+```
+```
 pkg-config --modversion opencv4
 ```
 
@@ -79,9 +84,11 @@ Windows には Git が標準で入っていないため、まず **Git for Windo
 - https://git-scm.com/download/win
 - ダウンロードしたインストーラを実行し、基本的に既定のまま進めて構いません。インストール後は PowerShell / コマンドプロンプトで `git` コマンドが使えます（確認：`git --version`）。
 
-配布リポジトリを**ローカルディスク**にクローンします（クラウド同期フォルダ不可）。
+配布リポジトリを**ローカルディスク**にクローンします（クラウド同期フォルダ不可）。`C:\Dev` などへ移動してから clone します。
 ```
 cd C:\Dev
+```
+```
 git clone https://github.com/Nozomi-Nishiumi/DXS_win_vscode_distribution.git
 ```
 VS Code の **File → Open Folder** でクローンしたフォルダを開きます。作成者を信頼するか聞かれたら **Yes**。
