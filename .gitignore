@@ -5,6 +5,7 @@ DerivedData/
 # runtime outputs (keep the folder, ignore generated files)
 DX_studies_2025/output/*
 !DX_studies_2025/output/.gitkeep
+!DX_studies_2025/output/cam_intrinsic_prameters_test.yml
 # macOS / editor
 .DS_Store
 *.xcuserstate
