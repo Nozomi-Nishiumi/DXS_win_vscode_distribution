@@ -2,6 +2,7 @@
 #include "OpenCV_functions.hpp"
 #include <algorithm>
 #include <iostream>
+#include <filesystem>   // std::filesystem::exists / create_directories（MinGWでは明示includeが必要）
 
 using namespace std;
 using namespace cv;

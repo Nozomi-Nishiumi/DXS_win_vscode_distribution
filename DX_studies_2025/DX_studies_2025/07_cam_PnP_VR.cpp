@@ -1,7 +1,9 @@
 #define GL_SILENCE_DEPRECATION
 #define lego 8.0
-#include "OpenCV_functions.hpp"
+// Windows(MSYS2)対策: GL/glut.h 経由の <windows.h> を、OpenCV(using namespace cv)より
+// 先に読み込む。逆順だと cv::ACCESS_MASK と winnt.h の ACCESS_MASK が衝突してビルド不可。
 #include "OpenGL_world.hpp"
+#include "OpenCV_functions.hpp"
 #include "CV_GL_combination.hpp"
 #include <thread>
 #include <fstream>

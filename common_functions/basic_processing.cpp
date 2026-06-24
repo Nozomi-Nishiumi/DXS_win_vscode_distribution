@@ -15,12 +15,11 @@
 #include <algorithm>
 #include <thread>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <dirent.h>
 #include <numeric>
 #include <time.h>
 #include <regex>
+#include <iomanip>     // setw / setfill（MinGWでは明示includeが必要）
+#include <filesystem>  // ディレクトリ走査をクロスプラットフォーム化（POSIX scandir の代替）
 
 namespace basic_processing {
 
@@ -154,74 +153,25 @@ double euclid_norm3(const double *x) {
 }
 
 void search_dir(string path,  vector<string> &fileNames, bool recursive){
+    // POSIX scandir/dirent から std::filesystem へ置き換え（Mac/Windows 両対応）。
+    // ディレクトリ内の通常ファイルのフルパスを fileNames に追加する（recursive で再帰）。
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    if(!fs::exists(path, ec)) return;
 
-    int i, dirElements;
-    string search_path;
-    std::string message = "";
-
-    struct stat stat_buf;
-    struct dirent **namelist=NULL;
-
-    // dirElements にはディレクトリ内の要素数が入る
-    dirElements = scandir(path.c_str(), &namelist, NULL, NULL);
-
-    if(dirElements == -1) {
-        message = "ERROR1: " + path;
-    }
-
-    else{
-
-        //ディレクトリかファイルかを順番に識別
-        for (i=0; i<dirElements; i+=1) {
-
-            // "." と ".." を除く
-            if( (strcmp(namelist[i]->d_name , ".\0") != 0) && (strcmp(namelist[i]->d_name , "..\0") != 0) ){
-
-                //search_pathには検索対象のフルパスを格納する
-                search_path = path + string(namelist[i] -> d_name);
-
-                // ファイル情報の取得の成功
-                if(stat(search_path.c_str(), &stat_buf) == 0){
-
-                    //                     ディレクトリだった場合の処理
-                    if ((stat_buf.st_mode & S_IFMT) == S_IFDIR&&recursive){
-                        // 再帰によりディレクトリ内を探索
-                        search_dir(path + string(namelist[i] -> d_name) + "/", fileNames,recursive);
-                    }
-
-                    //ファイルだった場合の処理
-                    else {
-                        size_t pos1;
-                        string file_subpath;
-
-                        pos1 = search_path.rfind('\\');
-                        if(pos1 != string::npos){
-                            file_subpath=search_path.substr(pos1+1, search_path.size()-pos1-1);
-                        }
-
-                        pos1 = search_path.rfind('/');
-                        if(pos1 != string::npos){
-                            file_subpath=search_path.substr(pos1+1, search_path.size()-pos1-1);
-                        }
-
-
-
-                        fileNames.push_back(search_path);
-                    }
-                }
-
-                // ファイル情報の取得の失敗
-                else{
-                    message = "ERROR2: " + path;
-                }
-            }
+    if(recursive){
+        for(auto it = fs::recursive_directory_iterator(path, ec);
+            !ec && it != fs::recursive_directory_iterator(); it.increment(ec)){
+            if(fs::is_regular_file(it->status()))
+                fileNames.push_back(it->path().string());
+        }
+    } else {
+        for(auto it = fs::directory_iterator(path, ec);
+            !ec && it != fs::directory_iterator(); it.increment(ec)){
+            if(fs::is_regular_file(it->status()))
+                fileNames.push_back(it->path().string());
         }
     }
-
-    for (int i=0; i < dirElements; i++) {
-        free(namelist[i]);
-    }
-    free(namelist);
     return;
 }
 

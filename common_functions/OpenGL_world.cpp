@@ -388,6 +388,11 @@ void MyGLApp::init(int argc, char** argv) {
     glutInitWindowSize(WindowWidth, WindowHeight); //ウィンドウサイズの指定
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STENCIL);//ディスプレイモードの指定
     MainWinID[0]=glutCreateWindow("user interface");
+#ifdef _WIN32
+    // GLEW は GL コンテキスト（ウィンドウ）生成後に初期化する。FBO 等の関数解決に必要。
+    glewExperimental = GL_TRUE;
+    glewInit();
+#endif
     glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA , GL_DST_ALPHA);
 

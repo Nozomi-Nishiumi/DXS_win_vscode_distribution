@@ -10,6 +10,11 @@
 
 #include <functional>
 #include <vector>
+#ifdef _WIN32
+// Windows(MSYS2)では FBO 等の関数が標準 gl.h に無いため GLEW を glut より前に読み込む。
+// macOS は OpenGL フレームワークが提供するので不要。
+#include <GL/glew.h>
+#endif
 #include <GL/glut.h>
 #include <glm.hpp>
 #include <iostream>
