@@ -7,7 +7,8 @@ VRプログラミング実習のための開発環境を、各自の Windows PC 
 - **MSYS2 経由でインストール**：OpenCV / OpenGL関連（glew・freeglut・Qt）
 - **環境変数（PATH）の設定**
 - **VS Code** と **C/C++ Extension Pack** の導入
-- **動作確認**：配布プロジェクトを開いて実行
+- **Git for Windows** の導入と、配布プロジェクトのクローン
+- **動作確認**：プロジェクトを開いて実行
 
 > **注意：プロジェクトはクラウド同期フォルダ（OneDrive / Google Drive / iCloud 等）に置かないでください。** 同期がファイルを古い版に巻き戻し、編集が消える事故が起きます。`C:\Dev\` などローカルに置いてください。
 
@@ -73,7 +74,11 @@ pkg-config --modversion opencv4
    - https://code.visualstudio.com/
 2. （任意）日本語化：左の **Extensions** で「Japanese Language Pack」を検索・インストールし、Restart。
 
-## 手順9. プロジェクトの取得（GitHub から）
+## 手順9. Git のインストールとプロジェクトの取得（GitHub から）
+Windows には Git が標準で入っていないため、まず **Git for Windows** をインストールします（バージョン管理ツール。`git clone` や VS Code のソース管理に使います）。
+- https://git-scm.com/download/win
+- ダウンロードしたインストーラを実行し、基本的に既定のまま進めて構いません。インストール後は PowerShell / コマンドプロンプトで `git` コマンドが使えます（確認：`git --version`）。
+
 配布リポジトリを**ローカルディスク**にクローンします（クラウド同期フォルダ不可）。
 ```
 cd C:\Dev
