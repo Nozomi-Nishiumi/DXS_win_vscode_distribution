@@ -14,3 +14,7 @@ Thumbs.db
 *.exe
 # color-threshold state, auto-generated per run/environment (mode 5 で各自調整)
 cam0_*.yml
+# ただし output/ のリファレンス(基準値)は同梱して追跡する（各自 mode 5 で上書き可能）
+!DX_studies_2025/output/cam0_ori.yml
+!DX_studies_2025/output/cam0_oth.yml
+!DX_studies_2025/output/cam0_tgt.yml
