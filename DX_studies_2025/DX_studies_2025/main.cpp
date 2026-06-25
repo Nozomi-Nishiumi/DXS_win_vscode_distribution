@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 
     int choice;
 
-    std::cout << "Select mode (1–7): ";
+    std::cout << "Select mode (1-7): ";
     std::cin >> choice;
 
     switch (choice) {
