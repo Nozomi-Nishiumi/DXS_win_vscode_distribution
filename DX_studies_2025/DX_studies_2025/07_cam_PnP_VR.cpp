@@ -33,12 +33,28 @@ GLuint GL_texture_7[1];
 
 
 
+// 実ウィンドウに、カメラのアスペクトを保って収まるビューポート矩形(中央フィット)を計算。
+// 従来の glViewport(0,0, aspect*800, 800) は実ウィンドウ寸法(init: 1280x832)と無関係な
+// ハードコードで、右切れ・上隙間の原因だった。実ウィンドウを glutGet で取得して合わせる。
+void cameraFitViewport(int& vx, int& vy, int& vw, int& vh){
+    int ww = glutGet(GLUT_WINDOW_WIDTH), wh = glutGet(GLUT_WINDOW_HEIGHT);
+    if(ww<=0||wh<=0){ vx=vy=0; vw=ww; vh=wh; return; }
+    double a = (camera.im_ori.empty())
+               ? (16.0/9.0)
+               : (double)camera.im_ori.cols/(double)camera.im_ori.rows;
+    if ((double)ww/(double)wh > a) { vh = wh; vw = (int)(a*wh); }   // 窓が横長 → 高さ基準
+    else                          { vw = ww; vh = (int)(ww/a);  }   // 窓が縦長 → 幅基準
+    vx = (ww-vw)/2; vy = (wh-vh)/2;
+}
+
 void viewsetting2(){
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //バッファの消去
 
     setupOpenGLProjectionAndView(cameraData[0], cameraData[1], Size(camera.im_ori.cols,camera.im_ori.rows), camera.rvec, camera.tvec);
-    glViewport(0, 0, (double)camera.im_ori.cols/(double)camera.im_ori.rows*800.0, 800);
+    // フラスタム底面(カメラ画像)が実ウィンドウに切れず・歪まず収まるよう中央フィット。
+    int vx,vy,vw,vh; cameraFitViewport(vx,vy,vw,vh);
+    glViewport(vx, vy, vw, vh);
 }
 
 string round_str(vector<double> values, int precision){
@@ -286,15 +302,16 @@ void FBO_layer(){
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     FBO fboObj2;
-    double aspect;
-    if (camera.capsize.width > 0 && camera.capsize.height > 0) {
-        aspect = (double)camera.capsize.width / (double)camera.capsize.height;
-    } else {
-        aspect = 16.0 / 9.0;
-    }
-    CreateFBO(fboObj2, aspect * 800.0, 800);
+    // FBO を実ウィンドウサイズで作り、合成も 1:1(0,0,ww,wh) で行う。こうすると FBO 内で
+    // viewsetting2/viewsetting が設定するビューポート位置が、そのままウィンドウ上の位置と
+    // 一致するため、背景(myDisplay_7 で描画)と CG レイヤがズレない。
+    int ww = glutGet(GLUT_WINDOW_WIDTH), wh = glutGet(GLUT_WINDOW_HEIGHT);
+    if(ww<=0) ww=1;
+    if(wh<=0) wh=1;
+    CreateFBO(fboObj2, ww, wh);
     FBO_contents();
     EndFBO();
+    glViewport(0, 0, ww, wh);
     DrawFBO_Additive(fboObj2);
     DeleteFBO(fboObj2);
 }
@@ -613,10 +630,20 @@ void calib(){
         cv::undistortPoints(imgCorners, normPoints, camera.cam_mat, camera.dist_coefs);
 
         // 正規化画像座標からカメラ座標へ（任意の depth）
+        // 底面クアッドは、setupOpenGLProjectionAndView の glFrustum と同じ「矩形」で作る。
+        //   left=normPoints[0].x(TL), right=normPoints[1].x(TR),
+        //   top =normPoints[0].y(TL), bottom=normPoints[2].y(BR)
+        // 4隅を独立に使うと歪み/principal point ずれで非矩形になり、矩形フラスタムと
+        // 一致せず底面がビューポート端に揃わない。矩形に揃えることで4隅とも一致する。
         float depth = 100.0f;
-        std::vector<cv::Point3f> camPoints;
-        for (const auto& p : normPoints)
-            camPoints.emplace_back(p.x * depth, p.y * depth, depth);
+        float L = normPoints[0].x, Rr = normPoints[1].x;
+        float T = normPoints[0].y, B  = normPoints[2].y;
+        std::vector<cv::Point3f> camPoints = {
+            {L  * depth, T * depth, depth},   // TL (imgCorners[0])
+            {Rr * depth, T * depth, depth},   // TR (imgCorners[1])
+            {Rr * depth, B * depth, depth},   // BR (imgCorners[2])
+            {L  * depth, B * depth, depth}    // BL (imgCorners[3])
+        };
 
 
 
