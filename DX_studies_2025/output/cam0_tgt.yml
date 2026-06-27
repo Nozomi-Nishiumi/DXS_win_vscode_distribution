@@ -4,6 +4,6 @@ ch0_min: 87
 ch0_max: 124
 ch1_min: 58
 ch1_max: 255
-ch2_min: 115
+ch2_min: 48
 ch2_max: 255
 N: 1

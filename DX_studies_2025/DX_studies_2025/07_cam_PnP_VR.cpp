@@ -418,8 +418,8 @@ void cap(){
         exit(0);
     }
 
-    capture.set(CAP_PROP_FRAME_WIDTH, 1920);
-    capture.set(CAP_PROP_FRAME_HEIGHT, 1080);
+    capture.set(CAP_PROP_FRAME_WIDTH, 1280);
+    capture.set(CAP_PROP_FRAME_HEIGHT, 720);
 
 
     while (1){
@@ -508,19 +508,19 @@ void tgt_tracking(){
 }
 
 void calib(){
-//    vector<Point3f> objectPoints = {
-//        Point3f(-5*lego, -5*lego, 0.0f),
-//        Point3f(5*lego, -5*lego, 0.0f),
-//        Point3f(5*lego, 5*lego, 0.0f),
-//        Point3f(-5*lego, 5*lego, 0.0f)
-//    };
+   vector<Point3f> objectPoints = {
+       Point3f(-4*lego, -4*lego, 0.0f),
+       Point3f(4*lego, -4*lego, 0.0f),
+       Point3f(4*lego, 4*lego, 0.0f),
+       Point3f(-4*lego, 4*lego, 0.0f)
+   };
     double unit=150.0;
-    vector<Point3f> objectPoints = {
-        Point3f(0,0,0),
-        Point3f(150.0,0,0),
-        Point3f(0,100.0,0),
-        Point3f(150.0,100.0,0)
-    };
+    // vector<Point3f> objectPoints = {
+    //     Point3f(0,0,0),
+    //     Point3f(150.0,0,0),
+    //     Point3f(0,100.0,0),
+    //     Point3f(150.0,100.0,0)
+    // };
 
 
     string yml="./output/cam_intrinsic_prameters_test.yml";

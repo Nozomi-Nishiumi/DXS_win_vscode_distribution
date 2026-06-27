@@ -51,8 +51,8 @@ int main6(int argc, char** argv) {
     const char* keys =
         "{help h usage ? |      | print this message }"
         "{device       | 0    | Camera device ID or URL }"
-        "{width        | 1920 | Capture width }"
-        "{height       | 1080  | Capture height }"
+        "{width        | 1280 | Capture width }"
+        "{height       | 720  | Capture height }"
         "{grid_size    | 10,7 | Chessboard grid size (cols,rows) of inner corners }"
         "{k_filename   |      | Filename for camera matrix K }"
         "{d_filename   |      | Filename for distortion coefficients d }"
