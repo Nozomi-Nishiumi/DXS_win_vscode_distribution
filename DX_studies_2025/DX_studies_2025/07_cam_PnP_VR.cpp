@@ -688,14 +688,11 @@ int main7(int argc, char *argv[])
     app_gl.setAddDisplayFunction(additionalDisplay_7);  // ユーザーの描画関数をデフォルトに追加
     app_gl.setWindowSize(1500, 800);  // ユーザーの描画関数を登録
 
-    app_gl.POVfrom[0]=-300;
-    app_gl.POVfrom[1]=-300;
-    app_gl.POVfrom[2]=500;
-    app_gl.POVto[0]=0;
-    app_gl.POVto[1]=0;
-    app_gl.POVto[2]=0;
-
     app_gl.init(argc, argv);
+
+    // 注: POVfrom/POVto をここで設定しても idle()->update_visualObj() が毎フレーム
+    // POVfrom = casts[Camera] で上書きするため無効。初期視点は OpenGL_world.hpp の
+    // 'obj'(casts[Camera] の初期値) で決まる。
 
     loadOBJ(models[0],"../common_data/CG_objects/lego.obj");
     glmScale(models[0],40);
