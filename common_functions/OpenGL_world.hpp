@@ -52,7 +52,7 @@ private:
     MyGLApp();
     int windowWidth = 400;
     int windowHeight = 800;
-    std::vector<double> obj={-1000.0,0.0,200.0,0.0,0.0,0.0,0.0,0.0};
+    std::vector<double> obj={0.0,-500.0,200.0,0.0,0.0,0.0,0.0,0.0};
     std::vector<std::vector<double>> casts={obj};
     std::vector<double> Camera_head={0,0,0};
     const double pi = 3.14159265358979323846264338327950288;

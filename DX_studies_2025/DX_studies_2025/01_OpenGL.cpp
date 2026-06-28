@@ -50,6 +50,11 @@ void free4Students(){
     drawGround(vector<double> {app.POVfrom[0],app.POVfrom[1],app.POVfrom[2]},
                100,0.4,0.4,0.4);
 
+    // 初期カメラ(obj)を (-1000,0,200) → (0,-500,200) に変更した分、ワールド物体を同じ
+    // Δ=(+1000,-500,0) だけ平行移動し、新カメラから見た相対位置を従前と一致させる。
+    // 地面(drawGround)はPOVfrom基準でカメラ追従なので対象外（この移動より前に描画）。
+    // 以降 free4Students の図形と draw_CGs の物体すべてにこの平行移動が乗る。
+    glTranslated(1000, -500, 0);
 
     glColor3d(1,1,1);
     glRasterPos3f(100,0,0);
