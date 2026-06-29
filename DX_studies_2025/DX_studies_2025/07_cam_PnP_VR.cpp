@@ -587,9 +587,9 @@ void aruco_tracking(){
     while(1){
         // 間引き: ArUco検出は約1.6msと軽く、無制限に回すと共有データ(camera.im_ori,
         // rvec/tvec)への無同期アクセス頻度が跳ね上がり、cap/calib/tgt と競合して
-        // 4点PnP・色追跡が崩れる。約60Hz(1/60秒)に抑えて衝突頻度とCPU占有を下げる。
+        // 4点PnP・色追跡が崩れる。約30Hz(1/30秒)に抑えて衝突頻度とCPU占有を下げる。
         // ※これは対症療法で競合自体は残る。完全解決には共有Matの同期/スナップショットが要る。
-        std::this_thread::sleep_for(std::chrono::microseconds(16667));
+        std::this_thread::sleep_for(std::chrono::milliseconds(33));
 
         // calib() がカメラのワールド姿勢(rvec/tvec)を確定するまで待つ。マーカー姿勢はまず
         // カメラ系で求め、その後カメラのワールド姿勢で世界系へ移すため両方が必要。
