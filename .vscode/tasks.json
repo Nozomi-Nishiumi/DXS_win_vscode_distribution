@@ -23,7 +23,7 @@
         "common_functions/*.cpp",
         "-LC:/msys64/mingw64/lib",
         "-lopencv_core", "-lopencv_imgproc", "-lopencv_highgui", "-lopencv_videoio",
-        "-lopencv_imgcodecs", "-lopencv_calib3d", "-lopencv_features2d",
+        "-lopencv_imgcodecs", "-lopencv_calib3d", "-lopencv_features2d", "-lopencv_objdetect",
         "-lglew32", "-lfreeglut", "-lopengl32", "-lglu32",
         "-mconsole",
         "-o", "DX_studies_2025/build/OpenGLApp.exe"

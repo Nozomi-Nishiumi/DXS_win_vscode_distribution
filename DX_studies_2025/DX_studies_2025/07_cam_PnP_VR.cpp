@@ -6,6 +6,7 @@
 #include "OpenCV_functions.hpp"
 #include "CV_GL_combination.hpp"
 #include <thread>
+#include <chrono>
 #include <fstream>
 #include <json.hpp>
 #include <filesystem>
@@ -28,6 +29,28 @@ vector<Point3f> trackdata_3d={cv::Point3f(0,0,0)};
 vector<Mat> cameraData;
 GLuint texture_7[2]={0,1};
 GLuint GL_texture_7[1];
+
+// --- 2個目のtgt: ArUcoマーカーの姿勢(位置+向き)をワールド座標系で保持 -------------
+// 1個目のtgt(色追跡)は「方向」しか得られないので z=0平面との交点で位置を決めるが、
+// ArUcoは4隅が既知なので solvePnP で「位置」と「姿勢(回転)」の両方を復元できる。
+// ArUcoはIDを最初から返す(辞書DICT_4X4_50, ID 0〜49)ので、ID毎に別モデルを表示する。
+struct ArucoPose {
+    bool    found=false;
+    Point3f pos=Point3f(0,0,0); // マーカー中心のワールド座標
+    Vec3d   axis=Vec3d(0,0,1);  // glRotated 用の回転軸
+    double  angle_deg=0.0;      // glRotated 用の回転角[deg]
+    int     miss=0;             // 連続で見失った検出回数(ヒステリシス用)
+};
+const int ARUCO_MAX_ID=4;          // 認識するマーカーのID範囲 [0, ARUCO_MAX_ID)
+// 検出は毎回100%成功しないため、見失っても直近の姿勢をこの回数だけ保持してCGの
+// 点滅を防ぐ。大きいほど点滅は減るが、実際に外した後も残像が長く残る。
+const int ARUCO_MISS_LIMIT=8;
+ArucoPose aruco_poses[ARUCO_MAX_ID]; // aruco_tracking() が書き込み、draw_CGmodels_aruco() が参照
+// マーカーのID → 表示するCGモデル番号(各自編集可)。未ロードの番号は描画されない。
+const int aruco_model_of_id[ARUCO_MAX_ID]={1, 0, 1, 0};
+// ArUcoマーカーの実寸(1辺=黒枠込み)。calib() の objectPoints と同じ単位(=lego単位)で、
+// 印刷したマーカーの実サイズに合わせて調整する。位置・姿勢の絶対スケールはこの値で決まる。
+const double aruco_marker_size=18.8;
 
 
 
@@ -237,6 +260,23 @@ void draw_GhostCGmodels(){
 }
 }
 
+// 2個目のtgt(ArUco)を、検出されたIDごとに対応モデルで表示。
+// aruco_tracking() がそのIDの姿勢を確定したフレームでのみ描画する。
+void draw_CGmodels_aruco(){
+    for(int id=0; id<ARUCO_MAX_ID; id++){
+        if(!aruco_poses[id].found) continue;
+        int m=aruco_model_of_id[id];
+        if(m<0 || !models[m]) continue;
+        glPushMatrix();
+        glTranslated(aruco_poses[id].pos.x, aruco_poses[id].pos.y, aruco_poses[id].pos.z); // 中心へ
+        if(aruco_poses[id].angle_deg>1e-6)                                                 // 向きへ
+            glRotated(aruco_poses[id].angle_deg,
+                      aruco_poses[id].axis[0], aruco_poses[id].axis[1], aruco_poses[id].axis[2]);
+        glmDraw(models[m], GLM_SMOOTH | GLM_COLOR);
+        glPopMatrix();
+    }
+}
+
 void draw_simplecg(){
     float time_s = glutGet(GLUT_ELAPSED_TIME)/1000.0;
     glPushMatrix();
@@ -291,7 +331,8 @@ void FBO_contents(){
 
 
 
-    draw_CGmodels();
+    draw_CGmodels();      // 1個目のtgt(色追跡): z=0交点に models[0]
+    draw_CGmodels_aruco();// 2個目のtgt(ArUco): IDごとの位置・姿勢に対応モデル
 
 }
 
@@ -524,6 +565,89 @@ void tgt_tracking(){
     }
 }
 
+// 2個目のtgt: 画像中のArUcoマーカーから位置・姿勢・IDを出すスレッド。
+// 流れ: detectMarkers で複数マーカーの4隅とIDを一括取得 → 各マーカーの4隅で
+//        solvePnP(カメラ系姿勢) → カメラのワールド姿勢で世界系へ変換 → aruco_poses[id] に保存。
+// ArUcoはQRより検出が桁違いに軽い(実測 約1.6ms vs 34ms)ため連続追跡に向く。
+void aruco_tracking(){
+    cv::aruco::Dictionary dict=cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
+    cv::aruco::DetectorParameters params;
+    cv::aruco::ArucoDetector detector(dict, params);
+
+    // マーカーローカル座標系での4隅(中心原点, z=0)。detectMarkers が返す順(TL,TR,BR,BL)に
+    // 合わせ、y上向きで定義する。CGの向きが裏返る/90°ずれる場合はこの順序や符号を調整する。
+    float h=(float)aruco_marker_size/2.0f;
+    std::vector<cv::Point3f> markerObjectPoints={
+        {-h,  h, 0.0f},  // top-left
+        { h,  h, 0.0f},  // top-right
+        { h, -h, 0.0f},  // bottom-right
+        {-h, -h, 0.0f}   // bottom-left
+    };
+
+    while(1){
+        // 間引き: ArUco検出は約1.6msと軽く、無制限に回すと共有データ(camera.im_ori,
+        // rvec/tvec)への無同期アクセス頻度が跳ね上がり、cap/calib/tgt と競合して
+        // 4点PnP・色追跡が崩れる。約60Hz(1/60秒)に抑えて衝突頻度とCPU占有を下げる。
+        // ※これは対症療法で競合自体は残る。完全解決には共有Matの同期/スナップショットが要る。
+        std::this_thread::sleep_for(std::chrono::microseconds(16667));
+
+        // calib() がカメラのワールド姿勢(rvec/tvec)を確定するまで待つ。マーカー姿勢はまず
+        // カメラ系で求め、その後カメラのワールド姿勢で世界系へ移すため両方が必要。
+        if(camera.im_ori.empty()||camera.rvec.empty()||camera.tvec.empty()){
+            for(int id=0;id<ARUCO_MAX_ID;id++) aruco_poses[id].found=false;
+            continue;
+        }
+        Mat src=camera.im_ori.clone();
+
+        // 複数マーカーを一括検出。corners[k] は各マーカーの4隅(TL,TR,BR,BL)、ids[k] はその整数ID。
+        std::vector<int> ids;
+        std::vector<std::vector<cv::Point2f>> corners, rejected;
+        try{ detector.detectMarkers(src, corners, ids, rejected); }
+        catch(const cv::Exception&){ ids.clear(); corners.clear(); }
+
+        bool seen[ARUCO_MAX_ID]={false};
+        if(!ids.empty()){
+            // camera.rvec/tvec : ワールド→カメラ  (X_cam = R_wc*X_world + t_wc)
+            cv::Mat R_wc; cv::Rodrigues(camera.rvec, R_wc);
+
+            for(size_t k=0;k<ids.size();k++){
+                int id=ids[k];                       // ArUcoはIDを整数で直接返す(復号不要)
+                if(id<0||id>=ARUCO_MAX_ID) continue;
+
+                // マーカーの姿勢をカメラ座標系で推定 (rvec_m/tvec_m: マーカーローカル→カメラ)
+                cv::Mat rvec_m, tvec_m;
+                if(!cv::solvePnP(markerObjectPoints, corners[k], camera.cam_mat, camera.dist_coefs,
+                                 rvec_m, tvec_m, false, cv::SOLVEPNP_ITERATIVE)) continue;
+
+                // カメラ系→ワールド系へ。
+                //   rvec_m/tvec_m : マーカーローカル→カメラ (X_cam = R_cm*X_m + t_cm)
+                // ∴ マーカー中心(X_m=0)のワールド位置 = R_wc^T (t_cm - t_wc)
+                //    マーカーのワールド回転           = R_wc^T * R_cm
+                cv::Mat R_cm; cv::Rodrigues(rvec_m, R_cm);
+                cv::Mat R_wm=R_wc.t()*R_cm;
+                cv::Mat pos =R_wc.t()*(tvec_m-camera.tvec);
+                cv::Vec3d aa; cv::Rodrigues(R_wm, aa);
+                double ang=cv::norm(aa);
+
+                aruco_poses[id].pos=cv::Point3f((float)pos.at<double>(0),
+                                                (float)pos.at<double>(1),
+                                                (float)pos.at<double>(2));
+                if(ang>1e-9){ aruco_poses[id].axis=aa/ang; aruco_poses[id].angle_deg=ang*180.0/CV_PI; }
+                else        { aruco_poses[id].axis=cv::Vec3d(0,0,1); aruco_poses[id].angle_deg=0.0; }
+                aruco_poses[id].found=true;
+                aruco_poses[id].miss=0;     // 検出成功 → 見失いカウントをリセット
+                seen[id]=true;
+            }
+        }
+        // このフレームで見えなかったIDは、ARUCO_MISS_LIMIT回連続で外れて初めてCGを消す。
+        // それまでは直近の姿勢を保持し、取りこぼしフレームでの点滅を防ぐ。
+        for(int id=0;id<ARUCO_MAX_ID;id++){
+            if(seen[id]) continue;
+            if(++aruco_poses[id].miss>=ARUCO_MISS_LIMIT) aruco_poses[id].found=false;
+        }
+    }
+}
+
 void calib(){
    vector<Point3f> objectPoints = {
        Point3f(-4*lego, -4*lego, 0.0f),
@@ -683,6 +807,7 @@ int main7(int argc, char *argv[])
     std::thread thread1(cap);
     std::thread thread2(calib);
     std::thread thread3(tgt_tracking);
+    std::thread thread4(aruco_tracking);   // 2個目のtgt: ArUcoマーカーの位置・姿勢
 
     app_gl.setDisplayFunction(myDisplay_7);  // ユーザーの描画関数を登録
     app_gl.setAddDisplayFunction(additionalDisplay_7);  // ユーザーの描画関数をデフォルトに追加
