@@ -16,10 +16,10 @@ using namespace std;
 
 int main5() {
 
-    Cam_data cam("cam0");
     // 現在の実行ディレクトリをプリント
     std::cout << "実行時ディレクトリ: " << fs::current_path() << std::endl;
 
+    Cam_data cam("cam0");   
     cam.ori.createTrackbar(180,255,255);
     cam.oth.createTrackbar(180,255,255);
     cam.tgt.createTrackbar(180,255,255);

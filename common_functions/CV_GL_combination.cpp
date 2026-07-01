@@ -170,6 +170,11 @@ void setupOpenGLProjectionAndView(
     float nearZ,
     float farZ
 ) {
+    // 無効なカメラ行列(空/非3x3)では undistortPoints が assertion で terminate する。
+    // 呼び出し側が共有Matをスレッド越しに渡してくる場合に一時的な不整合が起こりうるため、
+    // ここで弾いて投影設定をスキップする(そのフレームは前フレームの投影を維持)。
+    if(cameraMatrix.empty() || cameraMatrix.rows!=3 || cameraMatrix.cols!=3) return;
+
     // 1. OpenGL投影行列を作成（glFrustum）
 
     // 画像の4隅

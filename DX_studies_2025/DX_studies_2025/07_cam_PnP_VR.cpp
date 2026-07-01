@@ -74,7 +74,13 @@ void viewsetting2(){
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //バッファの消去
 
-    setupOpenGLProjectionAndView(cameraData[0], cameraData[1], Size(camera.im_ori.cols,camera.im_ori.rows), camera.rvec, camera.tvec);
+    // 共有Mat(cameraData/rvec/tvec)を局所にスナップショットして固定し、有効なときだけ投影。
+    // calibスレッドが cameraData を再代入する瞬間に読むと空/非3x3になり、setupOpenGL…内の
+    // undistortPoints が terminate する（今回の強制終了の経路）。
+    if(cameraData.size()<2) return;
+    cv::Mat K=cameraData[0], D=cameraData[1], rv=camera.rvec, tv=camera.tvec;
+    if(K.empty()||K.rows!=3||K.cols!=3||rv.empty()||tv.empty()) return;
+    setupOpenGLProjectionAndView(K, D, Size(camera.im_ori.cols,camera.im_ori.rows), rv, tv);
     // フラスタム底面(カメラ画像)が実ウィンドウに切れず・歪まず収まるよう中央フィット。
     int vx,vy,vw,vh; cameraFitViewport(vx,vy,vw,vh);
     glViewport(vx, vy, vw, vh);
@@ -243,6 +249,7 @@ void draw_CGmodels(){
         glmDraw(models[0], GLM_SMOOTH | GLM_COLOR);
         glPopMatrix();
 }
+
 }
 
 void draw_GhostCGmodels(){
@@ -330,9 +337,10 @@ void FBO_contents(){
 
 
 
+    glmDraw(models[1], GLM_SMOOTH);
 
-    draw_CGmodels();      // 1個目のtgt(色追跡): z=0交点に models[0]
-    draw_CGmodels_aruco();// 2個目のtgt(ArUco): IDごとの位置・姿勢に対応モデル
+    // draw_CGmodels();      // 1個目のtgt(色追跡): z=0交点に models[0]
+    // draw_CGmodels_aruco();// 2個目のtgt(ArUco): IDごとの位置・姿勢に対応モデル
 
 }
 
@@ -539,8 +547,14 @@ void tgt_tracking(){
 
 
         // 歪み補正後のピクセル→正規化座標
+        // 共有Matはローカルにスナップショット(ヘッダを固定)し、3x3有効時のみ使う。
+        // 別スレッドとの競合で一時的に空/非3x3になり undistortPoints が terminate する事故を防ぐ。
+        cv::Mat K1 = camera.new_cam_mat;
+        if(K1.empty() || K1.rows!=3 || K1.cols!=3){ continue; }
         std::vector<cv::Point2f> normPoints;
-        cv::undistortPoints(tgts, normPoints, camera.new_cam_mat, cv::noArray());
+        try{
+            cv::undistortPoints(tgts, normPoints, K1, cv::noArray());
+        }catch(const cv::Exception&){ continue; }
 
         // 正規化画像座標からカメラ座標へ（任意の depth）
         float depth = 1000.0f; // 視錐台の長さ（チェスボード単位と合わせて調整）
@@ -750,8 +764,13 @@ void calib(){
         };
 
         // 歪み補正後のピクセル→正規化座標
+        // 共有Matはローカルにスナップショット(ヘッダを固定)し、3x3有効時のみ使う。
+        cv::Mat K0 = camera.cam_mat, D0 = camera.dist_coefs;
+        if(K0.empty() || K0.rows!=3 || K0.cols!=3){ continue; }
         std::vector<cv::Point2f> normPoints;
-        cv::undistortPoints(imgCorners, normPoints, camera.cam_mat, camera.dist_coefs);
+        try{
+            cv::undistortPoints(imgCorners, normPoints, K0, D0);
+        }catch(const cv::Exception&){ continue; }
 
         // 正規化画像座標からカメラ座標へ（任意の depth）
         // 底面クアッドは、setupOpenGLProjectionAndView の glFrustum と同じ「矩形」で作る。
