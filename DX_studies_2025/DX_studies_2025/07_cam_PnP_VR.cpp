@@ -244,10 +244,13 @@ void draw_CGmodels(){
         cam.x!=0&&cam.y!=0&&cam.z!=0&&
         trackdata_3d.size()>0){
         vector<Point3f> tgt=intersect(cam,trackdata_3d,0);
-        glPushMatrix();
-        glTranslated(tgt[0].x, tgt[0].y, tgt[0].z);
-        glmDraw(models[0], GLM_SMOOTH | GLM_COLOR);
-        glPopMatrix();
+
+        for(auto loc:tgt){
+            glPushMatrix();
+            glTranslated(loc.x, loc.y, loc.z);
+            glmDraw(models[0], GLM_SMOOTH | GLM_COLOR);
+            glPopMatrix();
+        }
 }
 
 }
@@ -337,7 +340,7 @@ void FBO_contents(){
 
 
 
-    glmDraw(models[1], GLM_SMOOTH);
+    // glmDraw(models[1], GLM_SMOOTH);
 
     // draw_CGmodels();      // 1個目のtgt(色追跡): z=0交点に models[0]
     // draw_CGmodels_aruco();// 2個目のtgt(ArUco): IDごとの位置・姿勢に対応モデル
@@ -539,7 +542,7 @@ void tgt_tracking(){
                    camera.tgt.ch2_min, camera.tgt.ch2_max,
                    1);
 
-        vector<Point2f> tgts=get_N_targetpoints(proc, 1);
+        vector<Point2f> tgts=get_N_targetpoints(proc, camera.tgt.N);
 
         // ターゲット色が未検出だと tgts が空になる。空の点列を undistortPoints に渡すと
         // 内部の行列転置で cv::Exception(empty matrix) になって落ちるので、その場合はスキップ。
