@@ -5,7 +5,7 @@
       "label": "prepare build dir",
       "type": "shell",
       "command": "New-Item",
-      "args": ["-ItemType", "Directory", "-Force", "-Path", "DX_studies_2025/build"],
+      "args": ["-ItemType", "Directory", "-Force", "-Path", "DX_studies/build"],
       "options": { "shell": { "executable": "powershell.exe" } },
       "problemMatcher": []
     },
@@ -19,14 +19,14 @@
         "-IC:/msys64/mingw64/include/opencv4",
         "-I./common_functions",
         "-I.",
-        "DX_studies_2025/DX_studies_2025/*.cpp",
+        "DX_studies/DX_studies/*.cpp",
         "common_functions/*.cpp",
         "-LC:/msys64/mingw64/lib",
         "-lopencv_core", "-lopencv_imgproc", "-lopencv_highgui", "-lopencv_videoio",
         "-lopencv_imgcodecs", "-lopencv_calib3d", "-lopencv_features2d", "-lopencv_objdetect",
         "-lglew32", "-lfreeglut", "-lopengl32", "-lglu32",
         "-mconsole",
-        "-o", "DX_studies_2025/build/OpenGLApp.exe"
+        "-o", "DX_studies/build/OpenGLApp.exe"
       ],
       "options": {
         "shell": { "executable": "powershell.exe" },
@@ -40,9 +40,9 @@
       "label": "run OpenGL project",
       "type": "shell",
       "dependsOn": "build OpenGL project",
-      "command": "${workspaceFolder}/DX_studies_2025/build/OpenGLApp.exe",
+      "command": "${workspaceFolder}/DX_studies/build/OpenGLApp.exe",
       "options": {
-        "cwd": "${workspaceFolder}/DX_studies_2025",
+        "cwd": "${workspaceFolder}/DX_studies",
         "shell": { "executable": "powershell.exe" },
         "env": { "PATH": "C:/msys64/mingw64/bin;${env:PATH}" }
       },

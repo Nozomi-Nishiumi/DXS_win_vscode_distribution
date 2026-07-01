@@ -1,6 +1,6 @@
 //
 //  OpenCV_RT_track.cpp
-//  DX_studies_2025
+//  DX_studies
 //
 //  Created by nozomi nishiumi on 2026/02/18.
 //

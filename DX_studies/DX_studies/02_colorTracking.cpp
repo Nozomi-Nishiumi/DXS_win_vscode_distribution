@@ -1,6 +1,6 @@
 //
 //  main.cpp
-//  DX_studies_2025
+//  DX_studies
 //
 //  Created by nozomi nishiumi on 2025/06/04.
 //

@@ -5,10 +5,10 @@
       "name": "Debug OpenGLApp (Windows MSYS2)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/DX_studies_2025/build/OpenGLApp.exe",
+      "program": "${workspaceFolder}/DX_studies/build/OpenGLApp.exe",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/DX_studies_2025",
+      "cwd": "${workspaceFolder}/DX_studies",
       "environment": [
         { "name": "PATH", "value": "C:/msys64/mingw64/bin;${env:PATH}" }
       ],
